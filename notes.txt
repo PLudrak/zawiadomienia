@@ -1,0 +1,3 @@
+handle similar:
+-połącz z istniejącym tworzy nowy rekord
+	->trzeba usunąć duplikaty, ale to po rozkmninieniu tworzenia tabeli z relacjami 

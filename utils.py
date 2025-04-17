@@ -1,6 +1,17 @@
 from geopy.geocoders import Nominatim
-import re
 from colorama import Fore, Style, init
+from rapidfuzz import fuzz
+import pandas as pd
+import re
+def c_input():
+	return input(Fore.YELLOW + ">>> " +Style.RESET_ALL)
+
+def print_import_message(new_row:dict,keys:list[str]):
+	print(Fore.GREEN + "Załadowano:" + Style.RESET_ALL, end=": ")
+	for key in keys:
+		print(new_row[key],end=" ")
+	print()
+
 
 def create_name(SWDE_nazwa:str, SWDE_imie:str):
 	"""tworzy nazwę Osoby: NAZWISKO + IMIĘ(jeżeli imię występuje)"""
@@ -98,7 +109,7 @@ def missing_postcode(miejscowosc:str,adres, kody_pocztowe):
 		if kod.capitalize() == "2":
 			kod = search_postcode(adres)
 			break
-		elif kod.capitalize()== "1":
+		elif kod.capitalize()== "1" and ostatni_kod:
 			kod= kody_pocztowe[miejscowosc]
 			break
 		elif is_valid_postcode(kod):
@@ -147,7 +158,97 @@ def is_valid_postcode(postcode:str):
 		print("Niepoprawny kod pocztowy, spróbuj ponownie")
 		return valid
 
+def is_empty_val(val):
+	return val is None or str(val).strip().upper() in ["","NONE","NAN"]
+
+def compare_values(val1,val2, prog):
+	"""porównuje dwie wartości, zwraca True jezeli podobne lub identyczne"""
+	if is_empty_val(val1) and is_empty_val(val2):
+		return True
+	val1 = str(val1).upper().strip()
+	val2 = str(val2).upper().strip()
+	return fuzz.ratio(val1,val2) >=prog 
+
+def has_empty_critical(nowy_rekord,df_row, critical_keys):
+	"""Sprawdź czy kotrakolwiek wartosc kluczowa jest pusta"""
+	return any(is_empty_val(nowy_rekord[k]) or is_empty_val(df_row[k]) for k in critical_keys)
+			
+def find_similar_record(df:pd.DataFrame,nowy_rekord:dict,critical_keys=None, keys:list[str]=None,prog:int =90):
+	if keys is None:
+		keys = list(nowy_rekord.keys())
+	if critical_keys is None:
+		critical_keys = keys
+
+	first_similar = None
+
+	for _, row in df.iterrows():
+		podobienstwa = {key: compare_values(row[key],nowy_rekord[key],prog) for key in keys}
+		all_match = all(podobienstwa.values())
+		crit_match = any(podobienstwa[key] for key in critical_keys)
+
+		if all_match:
+			print("Znaleziono identyczny rekord")
+			compare_similarities(row,nowy_rekord,podobienstwa)
+			return handle_similar_records(row, nowy_rekord, identical =True)
+		
+		if first_similar is None and crit_match and not has_empty_critical(nowy_rekord,row,critical_keys):
+			first_similar = (row, podobienstwa)
+	
+	if first_similar:
+		row,podobienstwa = first_similar
+		print("Znaleziono podobny rekord")
+		compare_similarities(row,nowy_rekord,podobienstwa)
+		return handle_similar_records(row,nowy_rekord,identical=False)
+	return nowy_rekord
+
+def compare_similarities(old:pd.Series,nowy_rekord:dict, podobienstwa:dict):
+	"""wyswietla dwa rekordy do porownania"""
+	print("W BAZIE:",end=" ")
+	print_similarities(old.to_dict(),podobienstwa)
+	print("NOWY   :",end=" ")
+	print_similarities(nowy_rekord,podobienstwa)
+	
+
+def print_similarities(record, similarities):
+	"""wyswietla podobienstwa w rekordzie na zielono i elementy rozne na czerwono"""
+	for key in similarities.keys():
+		item=str(record[key])
+		if not item:
+			item = "None"
+		if similarities[key]:
+			print(Fore.GREEN+"| " + item+ Style.RESET_ALL,end=" ")
+		else:
+			print(Fore.RED +"| " + item +Style.RESET_ALL,end=" ")
+	print("|")
+
+def handle_similar_records(old:pd.Series,new:dict,identical=False):
+	print("Wybierz dzialanie:\n[1] Połącz z istniejącym\n[2] Utwórz nowy\n[3] Aktualizuj istniejacy")
+	if identical: 
+		print(Fore.YELLOW+"[4]"+ Style.RESET_ALL +
+			 "Usun duplikat z bazy i dodaj działkę do istniejacej osoby")
+	old = old.to_dict()
+	while True:
+		choice = c_input()
+		if choice == "1":
+			new["ID_ZASTAPIENIA"] = old["ID_ORYGINALNE"]
+			return new
+		if choice == "2":
+			return new
+		if choice == "3":
+			pass
+		if choice == "4" and identical:
+			print("Funkcja jeszcze nie obslugiwana")
+		else: 
+			print("Nieprawidłowy wybór")
+
+
 if __name__ == "__main__":
-	kody_pocztowe={}
-	is_valid_postcode('05-205')
-	missing_postcode('Klembów',"Żymirskiego 97",kody_pocztowe)
+	df = pd.DataFrame([
+    {"Nazwisko": "Kowalski", "Imię": "Jan", "Ulica": "Warszawska", "Nr_domu": "10", "Nr_lokalu": "8", "Kod": "00-001", "Miejscowość": "Warszawa"},
+	{"Nazwisko": "Kowalski", "Imię": "Jan", "Ulica": "Podlaska", "Nr_domu": "10", "Nr_lokalu": "8", "Kod": "00-001", "Miejscowość": "Warszawa"},
+	{"Nazwisko": "Marciniak", "Imię": "Janusz", "Ulica": "Podbeskidzka", "Nr_domu": "11", "Nr_lokalu": "9", "Kod": "00-000", "Miejscowość": "Niematakiej"}
+])
+
+	nowy = {"Nazwisko": "Kowalski", "Imię": "Jan", "Ulica": "Podlaska", "Nr_domu": "10", "Nr_lokalu": "8", "Kod": "00-001", "Miejscowość": "Warszawa"}
+
+	find_similar_record(df,nowy)

@@ -221,7 +221,11 @@ def print_similarities(record, similarities):
 			print(Fore.RED +"| " + item +Style.RESET_ALL,end=" ")
 	print("|")
 
-def handle_similar_records(old:pd.Series,new:dict,identical=False):
+def handle_similar_records(old:pd.Series,new:dict,identical=False, auto=True):
+	if identical and auto:
+		print("Złączono identyczne rekordy")
+		new["ID_ZASTAPIENIA"] = old["ID_ORYGINALNE"]
+		return new
 	print("Wybierz dzialanie:\n[1] Połącz z istniejącym\n[2] Utwórz nowy\n[3] Aktualizuj istniejacy")
 	if identical: 
 		print(Fore.YELLOW+"[4]"+ Style.RESET_ALL +

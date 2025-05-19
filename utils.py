@@ -15,9 +15,20 @@ def print_import_message(new_row:dict,keys:list[str]):
 
 def create_name(SWDE_nazwa:str, SWDE_imie:str):
 	"""tworzy nazwę Osoby: NAZWISKO + IMIĘ(jeżeli imię występuje)"""
+	SWDE_nazwa = usun_date_zgonu(SWDE_nazwa)
 	if SWDE_imie:
 		nazwa = f"{SWDE_nazwa} {SWDE_imie}".strip()
 		return nazwa
+	else:
+		return SWDE_nazwa
+
+def usun_date_zgonu(SWDE_nazwa:str):
+	if "DATA ZGONU:" in SWDE_nazwa.upper():
+		print("Nazwa przed ", SWDE_nazwa)
+		out = SWDE_nazwa.upper().split("DATA ZGONU:")[0].strip()
+		print("Nazwa po ",out)
+		return out
+		
 	else:
 		return SWDE_nazwa
 

@@ -1,3 +1,13 @@
 handle similar:
 -połącz z istniejącym tworzy nowy rekord
 	->trzeba usunąć duplikaty, ale to po rozkmninieniu tworzenia tabeli z relacjami 
+	->poprawić indeks
+
+dodać bazę danych relacji 
+dodac baze danych z dzialkami 
+
+dodac opcje aktualizacji
+	-jezeli dzialka wystepuje w nowym gmlu to sa tam tez wszystkie relacje
+		-> trzeba sprawdzic wlascicieli
+
+dodac menu

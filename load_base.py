@@ -2,6 +2,7 @@ from utils import *
 import pandas as pd
 from colorama import Fore, Style, init
 import time
+import os
 
 start = time.time()
 id_pracy = "S17K"
@@ -38,9 +39,9 @@ def create_base_from_excel(filename, aktualnosc_danych):
     df = pd.DataFrame(columns=osoby_kolumny)
 
     kody_pocztowe = {}
-    for index, row in df_import.iterrows():
+    for lp, (_, row) in enumerate(df_import.iterrows(), start=1):
         # informacje o osobach z tabeli wlasc.xlsx
-        LP = index + 1
+        LP = lp + 1
         ID_ORYGINALNE = f"{id_pracy}#{LP}"
         ID_ZASTAPIENIA = ID_ORYGINALNE
         SWDE_NAZWA = create_name(row["nazw"], row["imie"])
@@ -125,10 +126,34 @@ def create_base_from_excel(filename, aktualnosc_danych):
 
 filename = r"D:\Python\kuba\zawiadomienia\import\5.11.2024\wlasc.xlsx"
 df_main = create_base_from_excel(filename, "2024.11.5")
-df_main.to_excel("Osoby.xlsx", index=False)
+
 df_relacje = df_main[
     ["ID_ZASTAPIENIA", "ID_ORYGINALNE", "ID_DZIALKI", "UDZIAL", "RODZAJ_WLASNOSCI"]
 ]
-df_relacje.to_excel("Relacje.xlsx", index=False)
+df_osoby = df_main[
+    [
+        "ID_ZASTAPIENIA",
+        "ID_ORYGINALNE",
+        "SWDE_NAZWA",
+        "SWDE_ADRES",
+        "NAZWA",
+        "PESEL",
+        "IMIE_OJCA",
+        "IMIE_MATKI",
+        "TYP_OSOBY",
+        "ADRES",
+        "ULICA",
+        "NR_DOMU",
+        "NR_LOKALU",
+        "KOD_POCZTOWY",
+        "MIASTO",
+    ]
+]
+
+# ZAPIS DO EXCELA
+os.makedirs("db", exist_ok=True)
+with pd.ExcelWriter(os.path.join("db", "baza.xlsx")) as writer:
+    df_osoby.to_excel(writer, sheet_name="OSOBY")
+    df_relacje.to_excel(writer, sheet_name="RELACJE")
 end = time.time()
 print(f"czas wykonania: {end-start:.4f} sekund")

@@ -156,12 +156,12 @@ def search_postcode(miejscowosc: str):
         return None
 
     # Sprawdź czy kod jest w polu postcode
-    adress = location.raw.get("address", {})
+    adress = location.raw.get("address", {})  # type: ignore
     postcode = adress.get("postcode")
 
     # Jeżeli brak w polu postcode, przeszukaj regexem:
     if not postcode:
-        display = location.raw.get("display_name", "")
+        display = location.raw.get("display_name", "")  # type: ignore
         match = re.search(r"\b\d{2}-\d{3}\b", display)
         if match:
             postcode = match.group()

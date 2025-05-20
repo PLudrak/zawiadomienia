@@ -49,7 +49,7 @@ def create_base_from_excel(filename, aktualnosc_danych):
         IMIE_OJCA = row["imie_o"]
         IMIE_MATKI = row["imie_m"]
         TYP_OSOBY = row["typ_os"]
-        PESEL = row["pesel"]
+        PESEL = int(row["pesel"])
         NIP = row["nip"]
         ULICA, NR_DOMU, NR_LOKALU, KOD_POCZTOWY, MIASTO = convert_adress(
             SWDE_ADRES, kody_pocztowe
@@ -151,7 +151,7 @@ df_osoby = df_main[
 ]
 
 # ZAPIS DO EXCELA
-os.makedirs("db", exist_ok=True)
+os.makedirs("data", exist_ok=True)
 with pd.ExcelWriter(os.path.join("db", "baza.xlsx")) as writer:
     df_osoby.to_excel(writer, sheet_name="OSOBY")
     df_relacje.to_excel(writer, sheet_name="RELACJE")

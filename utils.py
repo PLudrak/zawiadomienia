@@ -303,6 +303,13 @@ def handle_similar_records(old: pd.Series, new: dict, identical=False, auto=True
             print("Nieprawidłowy wybór")
 
 
+def czy_brak_adresu(ULICA, NR_DOMU, MIASTO):
+    if any(s == "-" for s in [ULICA, NR_DOMU, MIASTO]):
+        return True
+    else:
+        return False
+
+
 if __name__ == "__main__":
     df = pd.DataFrame(
         [
